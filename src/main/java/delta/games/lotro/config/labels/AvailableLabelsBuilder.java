@@ -62,6 +62,9 @@ public class AvailableLabelsBuilder
     // Russian
     LabelsEntry ru=new LabelsEntry("ru","ru","Русский");
     cfg.registerEntry(ru);
+    // Chinese
+    LabelsEntry zh=new LabelsEntry("zh","zh","中文");
+    cfg.registerEntry(zh);
     return cfg;
   }
 }
