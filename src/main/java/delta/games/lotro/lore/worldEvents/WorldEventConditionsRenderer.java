@@ -509,6 +509,10 @@ public class WorldEventConditionsRenderer
     {
       return handleMissionDay(operator,value,"Before the Shadow"); // 1-9
     }
+    if ("WE_Integer_U46_Mur_Ghala_Mission_Config".equals(weProperty))
+    {
+      return handleMissionDay(operator,value,"Mûr Ghala"); // 1-5
+    }
     return null;
   }
 
