@@ -1,8 +1,11 @@
 package delta.games.lotro.lore.items.io.xml;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.zip.GZIPInputStream;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -10,6 +13,7 @@ import javax.xml.parsers.SAXParserFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
@@ -108,11 +112,16 @@ public final class ItemSaxParser extends DefaultHandler
     try
     {
       ItemSaxParser handler=new ItemSaxParser();
-      // Use the default (non-validating) parser
       SAXParserFactory factory=SAXParserFactory.newInstance();
       factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
       SAXParser saxParser=factory.newSAXParser();
-      saxParser.parse(source,handler);
+      InputStream is=openGzipAwareStream(source);
+      if (is==null)
+      {
+        LOGGER.error("Cannot open items file "+source);
+        return new ArrayList<Item>();
+      }
+      saxParser.parse(new InputSource(is),handler);
       saxParser.reset();
       return handler._parsedItems;
     }
@@ -121,6 +130,47 @@ public final class ItemSaxParser extends DefaultHandler
       LOGGER.error("Error when loading items file "+source,e);
     }
     return new ArrayList<Item>();
+  }
+
+  private static InputStream openGzipAwareStream(File source)
+  {
+    if (source==null)
+    {
+      return null;
+    }
+    if (source.getName().endsWith(".gz") && source.exists())
+    {
+      try
+      {
+        return new GZIPInputStream(new java.io.BufferedInputStream(new FileInputStream(source)));
+      }
+      catch(Exception e)
+      {
+        LOGGER.error("Cannot open gzipped file "+source,e);
+        return null;
+      }
+    }
+    try
+    {
+      return new java.io.BufferedInputStream(new FileInputStream(source));
+    }
+    catch(Exception e)
+    {
+      // file not found; try .gz
+    }
+    File gz=new File(source.getAbsolutePath()+".gz");
+    if (gz.exists())
+    {
+      try
+      {
+        return new GZIPInputStream(new java.io.BufferedInputStream(new FileInputStream(gz)));
+      }
+      catch(Exception e)
+      {
+        LOGGER.error("Cannot open gzipped file "+gz,e);
+      }
+    }
+    return null;
   }
 
   @Override

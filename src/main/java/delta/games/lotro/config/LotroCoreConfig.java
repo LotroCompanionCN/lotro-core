@@ -142,6 +142,14 @@ public final class LotroCoreConfig
       return null;
     }
     File ret=new File(_rootDir,path);
+    if (!ret.exists() && ret.getName().endsWith(".xml"))
+    {
+      File gzFile=new File(ret.getPath()+".gz");
+      if (gzFile.exists())
+      {
+        return gzFile;
+      }
+    }
     return ret;
   }
 

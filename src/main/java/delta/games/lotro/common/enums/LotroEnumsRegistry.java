@@ -66,6 +66,14 @@ public class LotroEnumsRegistry
     File enumsDir=LotroCoreConfig.getInstance().getFile(DataFiles.ENUMS_DIR);
     String fileName=implClass.getSimpleName()+".xml";
     File enumFile=new File(enumsDir,fileName);
+    if (!enumFile.exists())
+    {
+      File gzFile=new File(enumsDir,fileName+".gz");
+      if (gzFile.exists())
+      {
+        enumFile=gzFile;
+      }
+    }
     LotroEnum<T> ret=new EnumXMLParser<T>().parseXML(enumFile,implClass);
     if (ret!=null)
     {

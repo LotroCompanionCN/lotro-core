@@ -1,8 +1,12 @@
 package delta.games.lotro.lore.agents.mobs.loot.io.xml;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.zip.GZIPInputStream;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -10,6 +14,7 @@ import javax.xml.parsers.SAXParserFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
@@ -60,12 +65,16 @@ public final class GenericMobLootSaxParser extends DefaultHandler
     try
     {
       GenericMobLootSaxParser handler=new GenericMobLootSaxParser();
-
-      // Use the default (non-validating) parser
       SAXParserFactory factory=SAXParserFactory.newInstance();
       factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
       SAXParser saxParser=factory.newSAXParser();
-      saxParser.parse(source,handler);
+      InputStream is=openGzipAwareStream(source);
+      if (is==null)
+      {
+        LOGGER.error("Cannot open species loot file "+source);
+        return null;
+      }
+      saxParser.parse(new InputSource(is),handler);
       saxParser.reset();
       return handler._data;
     }
@@ -73,6 +82,22 @@ public final class GenericMobLootSaxParser extends DefaultHandler
     {
       LOGGER.error("Error when loading species loot file "+source,e);
     }
+    return null;
+  }
+
+  private static InputStream openGzipAwareStream(File source)
+  {
+    if (source==null)
+    {
+      return null;
+    }
+    if (source.getName().endsWith(".gz") && source.exists())
+    {
+      try { return new GZIPInputStream(new BufferedInputStream(new FileInputStream(source))); } catch(Exception e) {}
+    }
+    try { return new BufferedInputStream(new FileInputStream(source)); } catch(Exception e) {}
+    File gz=new File(source.getAbsolutePath()+".gz");
+    if (gz.exists()) { try { return new GZIPInputStream(new BufferedInputStream(new FileInputStream(gz))); } catch(Exception e) {} }
     return null;
   }
 
